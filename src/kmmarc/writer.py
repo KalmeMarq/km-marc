@@ -9,7 +9,7 @@ class MarcJsonWriter:
     def __init__(self, f, layout_format: int = 1, ignored_tags: list[str] | None = None, indent: int | None = None):
         self.f = f
         self.format = layout_format
-        self.ignored_tags = ignored_tags
+        self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.indent = indent
 
     def _write_format1(self, record: Record):
@@ -19,11 +19,17 @@ class MarcJsonWriter:
         }
 
         for field in record.control_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             obj['fields'].append({
                 field.tag: field.data
             })
 
         for field in record.data_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             field_obj = {'ind1': field.ind1, 'ind2': field.ind2, 'subfields': []}
 
             for subfield in field.subfields:
@@ -105,10 +111,11 @@ class MarcYamlWriter(MarcJsonWriter):
 
 
 class MarcXmlWriter:
-    def __init__(self, f, indent: int | None = None, xml_declaration=True, use_marc_namespace=False) -> None:
+    def __init__(self, f, indent: int | None = None, ignored_tags: list[str] | None = None, xml_declaration=True, use_marc_namespace=False) -> None:
         self.f = f
         self.xml_declaration = xml_declaration
         self.indent = indent
+        self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.namespace = 'marc:' if use_marc_namespace else ''
         self.collection_tag = ET.Element(f'{self.namespace}collection')
         if use_marc_namespace:
@@ -120,11 +127,17 @@ class MarcXmlWriter:
         leader_tag.text = record.leader
 
         for field in record.control_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             field_tag = ET.SubElement(record_tag, f'{self.namespace}controlfield')
             field_tag.attrib['tag'] = field.tag
             field_tag.text = field.data
 
         for field in record.data_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             field_tag = ET.SubElement(record_tag, f'{self.namespace}datafield')
             field_tag.attrib['tag'] = field.tag
             field_tag.attrib['ind1'] = field.ind1
@@ -147,8 +160,9 @@ class MarcXmlWriter:
 
 
 class MarcStreamWriter:
-    def __init__(self, f: io.FileIO, force_utf8_encoding=False) -> None:
+    def __init__(self, f: io.FileIO, force_utf8_encoding=False, ignored_tags: list[str] | None = None) -> None:
         self.f = f
+        self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.force_utf8_encoding = force_utf8_encoding
 
     def write(self, record: Record):
@@ -164,12 +178,18 @@ class MarcStreamWriter:
             encoding = 'utf-8'
 
         for field in record.control_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             data_buf.write(field.data.encode(encoding))
             data_buf.write(FT)
             dir_buf.write(f"{field.tag}{(data_buf.tell() - previous):04d}{previous:05d}".encode('iso8859-1'))
             previous = data_buf.tell()
 
         for field in record.data_fields:
+            if self.ignored_tags.count(field.tag) > 0:
+                continue
+
             data_buf.write(field.ind1.encode(encoding))
             data_buf.write(field.ind2.encode(encoding))
             for subfield in field.subfields:
