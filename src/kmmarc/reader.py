@@ -32,7 +32,7 @@ class MarcJsonReader:
                     record.data_fields.append(field)
         else:
             for tag in record_obj['fields']:
-                for field_obj in record_obj['fields']['tag']:
+                for field_obj in record_obj['fields'][tag]:
                     if int(tag) < 10:
                         field = ControlField(tag, field_obj)
 
