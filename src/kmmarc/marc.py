@@ -50,7 +50,7 @@ class DataField(VariableField):
 
 
 class Leader:
-    def __init__(self) -> None:
+    def __init__(self, leader_str: str | None = None) -> None:
         self.record_length = 0
         self.record_status: str = ' '
         self.type_of_record: str = ' '
@@ -61,14 +61,31 @@ class Leader:
         self.base_address_of_data = 0
         self.impl_defined2 = []
         self.entry_map: list[str] = []
+        if leader_str is not None:
+            self.unmarshal(leader_str)
+
+    def marshal(self):
+        return f"{self.record_length:05d}{self.record_status}{self.type_of_record}{''.join(self.impl_defined1)}{self.char_coding_scheme}{self.indicator_count}{self.subfield_length}{self.base_address_of_data:05d}{''.join(self.impl_defined2)}{''.join(self.entry_map)}"
+    
+    def unmarshal(self, leader_str):
+        self.record_length = int(leader_str[0:5])
+        self.record_status = leader_str[5:6]
+        self.type_of_record = leader_str[6:7]
+        self.impl_defined1 = leader_str[7:9]
+        self.char_coding_scheme = leader_str[9:10]
+        self.indicator_count = int(leader_str[10:11])
+        self.subfield_length = int(leader_str[11:12])
+        self.base_address_of_data = int(leader_str[12:17])
+        self.impl_defined2 = leader_str[17:20]
+        self.entry_map = leader_str[20:24]
 
     def __str__(self) -> str:
-        return f"=LDR {self.record_length:05d}{self.record_status}{self.type_of_record}{''.join(self.impl_defined1)}{self.char_coding_scheme}{self.indicator_count}{self.subfield_length}{self.base_address_of_data:05d}{''.join(self.impl_defined2)}{''.join(self.entry_map)}"
+        return f"=LDR {self.marshal()}"
 
 
 class Record:
-    def __init__(self, leader: Leader) -> None:
-        self.leader = leader
+    def __init__(self, leader: Leader | str) -> None:
+        self.leader = leader if isinstance(leader, Leader) else Leader(leader_str=leader)
         self.control_fields: list[ControlField] = []
         self.data_fields: list[DataField] = []
 
