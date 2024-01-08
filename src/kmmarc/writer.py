@@ -39,7 +39,7 @@ class MarcJsonWriter:
 
     def _write_format2(self, record: Record):
         obj = {
-            'leader': record.leader,
+            'leader': str(record.leader),
             'fields': {}
         }
 

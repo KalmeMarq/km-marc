@@ -1,5 +1,6 @@
 from kmmarc.marc import *
 
+
 def format_record_as_unimarc_view(record: Record):
     res = f"MFN: 0\nEstado: UNK   Tipo: UNK   Nível hierárquico: UNK  Nível de cod: UNK\n"
     for ctrl_field in sorted(record.control_fields, key=lambda cs : cs.tag):
