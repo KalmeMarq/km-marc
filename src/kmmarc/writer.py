@@ -227,3 +227,41 @@ class MarcStreamWriter:
     def write_all(self, *records):
         for record in records:
             self.write(record)
+
+
+def write_marc_json_to_path(path: str, records: list[Record] | Record, encoding = "utf-8", writer_getter = None):
+    with open(path, "w", encoding=encoding) as f:
+        writer = writer_getter(f) if writer_getter is not None else MarcJsonWriter(f)
+        if isinstance(records, Record):
+            writer.write(records)
+        else:
+            writer.write_all(records)
+
+
+def write_marc_yaml_to_path(path: str, records: list[Record] | Record, encoding = "utf-8", writer_getter = None):
+    with open(path, "w", encoding=encoding) as f:
+        writer = writer_getter(f) if writer_getter is not None else MarcYamlWriter(f)
+        if isinstance(records, Record):
+            writer.write(records)
+        else:
+            writer.write_all(records)
+
+
+def write_marc_xml_to_path(path: str, records: list[Record] | Record, encoding = "utf-8", writer_getter = None):
+    with open(path, "w", encoding=encoding) as f:
+        writer = writer_getter(f) if writer_getter is not None else MarcXmlWriter(f)
+        if isinstance(records, Record):
+            writer.write(records)
+        else:
+            writer.write_all(records)
+        
+        writer.flush()
+
+
+def write_marc_stream_to_path(path: str, records: list[Record] | Record, writer_getter = None):
+    with open(path, "wb") as f:
+        writer = writer_getter(f) if writer_getter is not None else MarcStreamWriter(f)
+        if isinstance(records, Record):
+            writer.write(records)
+        else:
+            writer.write_all(records)

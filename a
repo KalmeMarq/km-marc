@@ -1,0 +1,2 @@
+twine upload -r pypi dist/*
+py -m build

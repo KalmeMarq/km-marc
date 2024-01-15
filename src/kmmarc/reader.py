@@ -242,3 +242,29 @@ class MarcStreamReader:
     def __iter__(self):
         while self.__buf.tell() < self.__bytes_len:
             yield self.read_next()
+
+
+def read_marc_json_from_path(path: str, parse_all = False, encoding = "utf-8"):
+    with open(path, "r", encoding=encoding) as f:
+        reader = MarcJsonReader(f)
+        if parse_all:
+            return list(reader)
+        else:
+            for record in reader:
+                yield record
+
+
+def read_marc_xml_from_path(path: str, encoding = "utf-8"):
+    with open(path, "r", encoding=encoding) as f:
+        reader = MarcXmlReader(f)
+        return list(reader)
+    
+
+def read_marc_stream_from_path(path: str, parse_all = False, force_utf8_encoding = False):
+    with open(path, "rb") as f:
+        reader = MarcStreamReader(f, force_utf8_encoding)
+        if parse_all:
+            return list(reader)
+        else:
+            for record in reader:
+                yield record
