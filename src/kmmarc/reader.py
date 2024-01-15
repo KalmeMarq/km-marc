@@ -1,4 +1,5 @@
 import json
+import yaml
 import io
 import xml.etree.ElementTree as ET
 from kmmarc.marc import Record, ControlField, DataField, SubField, Leader
@@ -52,6 +53,13 @@ class MarcJsonReader:
     def __iter__(self):
         for i in range(len(self.json)):
             yield self.__next(i)
+
+
+class MarcYamlReader(MarcJsonReader):
+    def __init__(self, f) -> None:
+        self.json = yaml.load(f)
+        if not isinstance(self.json, list):
+            self.json = [self.json]
 
 
 class MarcXmlReader:
@@ -247,6 +255,16 @@ class MarcStreamReader:
 def read_marc_json_from_path(path: str, parse_all = False, encoding = "utf-8"):
     with open(path, "r", encoding=encoding) as f:
         reader = MarcJsonReader(f)
+        if parse_all:
+            return list(reader)
+        else:
+            for record in reader:
+                yield record
+
+
+def read_marc_yaml_from_path(path: str, parse_all = False, encoding = "utf-8"):
+    with open(path, "r", encoding=encoding) as f:
+        reader = MarcYamlReader(f)
         if parse_all:
             return list(reader)
         else:
