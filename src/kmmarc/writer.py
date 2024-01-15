@@ -6,11 +6,12 @@ from kmmarc.marc import Record
 from kmmarc.constants import *
 
 class MarcJsonWriter:
-    def __init__(self, f, layout_format: int = 1, ignored_tags: list[str] | None = None, indent: int | None = None):
+    def __init__(self, f, layout_format: int = 1, ignored_tags: list[str] | None = None, indent: int | None = None, sort_tags = False):
         self.f = f
         self.format = layout_format
         self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.indent = indent
+        self.sort_tags = sort_tags
 
     def _write_format1(self, record: Record):
         obj = {
@@ -18,7 +19,7 @@ class MarcJsonWriter:
             'fields': []
         }
 
-        for field in record.control_fields:
+        for field in record.get_control_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 
@@ -26,7 +27,7 @@ class MarcJsonWriter:
                 field.tag: field.data
             })
 
-        for field in record.data_fields:
+        for field in record.get_data_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 
@@ -49,13 +50,13 @@ class MarcJsonWriter:
             'fields': {}
         }
 
-        for field in record.control_fields:
+        for field in record.get_control_fields(sorted=self.sort_tags):
             if field.tag not in obj['fields']:
                 obj['fields'][field.tag] = []
 
             obj['fields'][field.tag].append(field.data)
 
-        for field in record.data_fields:
+        for field in record.get_data_fields(sorted=self.sort_tags):
             if field.tag not in obj['fields']:
                 obj['fields'][field.tag] = []
 
@@ -111,13 +112,14 @@ class MarcYamlWriter(MarcJsonWriter):
 
 
 class MarcXmlWriter:
-    def __init__(self, f, indent: int | None = None, ignored_tags: list[str] | None = None, xml_declaration=True, use_marc_namespace=False) -> None:
+    def __init__(self, f, indent: int | None = None, ignored_tags: list[str] | None = None, xml_declaration=True, use_marc_namespace=False, sort_tags = False) -> None:
         self.f = f
         self.xml_declaration = xml_declaration
         self.indent = indent
         self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.namespace = 'marc:' if use_marc_namespace else ''
         self.collection_tag = ET.Element(f'{self.namespace}collection')
+        self.sort_tags = sort_tags
         if use_marc_namespace:
             self.collection_tag.attrib['xmlns:marc'] = 'http://www.loc.gov/MARC21/slim'
 
@@ -126,7 +128,7 @@ class MarcXmlWriter:
         leader_tag = ET.SubElement(record_tag, f'{self.namespace}leader')
         leader_tag.text = record.leader
 
-        for field in record.control_fields:
+        for field in record.get_control_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 
@@ -134,7 +136,7 @@ class MarcXmlWriter:
             field_tag.attrib['tag'] = field.tag
             field_tag.text = field.data
 
-        for field in record.data_fields:
+        for field in record.get_data_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 
@@ -160,10 +162,11 @@ class MarcXmlWriter:
 
 
 class MarcStreamWriter:
-    def __init__(self, f: io.FileIO, force_utf8_encoding=False, ignored_tags: list[str] | None = None) -> None:
+    def __init__(self, f: io.FileIO, force_utf8_encoding=False, ignored_tags: list[str] | None = None, sort_tags = False) -> None:
         self.f = f
         self.ignored_tags = [] if ignored_tags is None else ignored_tags
         self.force_utf8_encoding = force_utf8_encoding
+        self.sort_tags = sort_tags
 
     def write(self, record: Record):
         dir_buf = io.BytesIO()
@@ -177,7 +180,7 @@ class MarcStreamWriter:
             ldr.char_coding_scheme = "a"
             encoding = 'utf-8'
 
-        for field in record.control_fields:
+        for field in record.get_control_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 
@@ -186,7 +189,7 @@ class MarcStreamWriter:
             dir_buf.write(f"{field.tag}{(data_buf.tell() - previous):04d}{previous:05d}".encode('iso8859-1'))
             previous = data_buf.tell()
 
-        for field in record.data_fields:
+        for field in record.get_data_fields(sorted=self.sort_tags):
             if self.ignored_tags.count(field.tag) > 0:
                 continue
 

@@ -97,6 +97,15 @@ class Record:
         self.control_fields: list[ControlField] = []
         self.data_fields: list[DataField] = []
 
+    def get_fields(self, sorted = False):
+        return self.get_control_fields(sorted).extend(self.get_data_fields(sorted))
+
+    def get_control_fields(self, sorted = False):
+        return sorted(self.control_fields, key=lambda cs : cs.tag) if sorted else self.control_fields
+
+    def get_data_fields(self, sorted = False):
+        return sorted(self.data_fields, key=lambda cs : cs.tag) if sorted else self.data_fields
+
     def __getitem__(self, key) -> list[ControlField | DataField] | None:
         if key in Record.__custom_getters:
             try:
