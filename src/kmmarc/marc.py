@@ -64,6 +64,14 @@ class Leader:
         if leader_str is not None:
             self.unmarshal(leader_str)
 
+    def __getitem__(self, key):
+        try:
+            idx = int(key)
+            marshal_str = self.marshal()
+            return marshal_str[idx] if idx >= 0 and idx < len(marshal_str) else None
+        except:
+            return None
+
     def marshal(self):
         return f"{self.record_length:05d}{self.record_status}{self.type_of_record}{''.join(self.impl_defined1)}{self.char_coding_scheme}{self.indicator_count}{self.subfield_length}{self.base_address_of_data:05d}{''.join(self.impl_defined2)}{''.join(self.entry_map)}"
     
